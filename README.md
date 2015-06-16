@@ -4,7 +4,7 @@
 
 This gem extends Money::Bank::VariableExchange of gem [money](https://github.com/RubyMoney/money) and gives you access to the current exchange rates using [currencylayer.com](https://currencylayer.com/)
 
-[GitHub Pages Website](http://askuratovsky.github.io/money-json-rates/)
+[GitHub Pages Website](http://askuratovsky.github.io/currencylayer/)
 
 ## Features
 
