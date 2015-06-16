@@ -1,0 +1,157 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Currencylayer by askuratovsky</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-dark.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/askuratovsky/currencylayer">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/askuratovsky/currencylayer/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/askuratovsky/currencylayer/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>Currencylayer</h1>
+          <p>This gem extends Money::Bank::VariableExchange with Money::Bank::Currencylayer and gives you access to the current exchange rates on currencylayer.com.</p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/askuratovsky">askuratovsky</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
+        </div>
+
+        <h1>
+<a id="currencylayer" class="anchor" href="#currencylayer" aria-hidden="true"><span class="octicon octicon-link"></span></a>Currencylayer</h1>
+
+<p>This gem extends Money::Bank::VariableExchange of gem <a href="https://github.com/RubyMoney/money">money</a> and gives you access to the current exchange rates using <a href="https://currencylayer.com/">currencylayer.com</a></p>
+
+<h2>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h2>
+
+<ul>
+<li>supports 168 currencies</li>
+<li>precision of rates up to 6 digits after point</li>
+<li>uses fast and reliable json api</li>
+<li>average response time &lt; 20ms</li>
+<li>supports caching currency rates</li>
+</ul>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<p>Add this line to your application's Gemfile:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="pl-k">gem</span> <span class="pl-s"><span class="pl-pds">'</span>currencylayer<span class="pl-pds">'</span></span></pre></div>
+
+<p>And then execute:</p>
+
+<pre><code>$ bundle
+</code></pre>
+
+<p>Or install it yourself as:</p>
+
+<pre><code>$ gem install currencylayer
+</code></pre>
+
+<h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<p>First, you should to register account on <a href="https://currencylayer.com/">currencylayer.com</a> and get your personal access_key.</p>
+
+<div class="highlight highlight-ruby"><pre><span class="pl-k">require</span> <span class="pl-s"><span class="pl-pds">'</span>money<span class="pl-pds">'</span></span>
+<span class="pl-k">require</span> <span class="pl-s"><span class="pl-pds">'</span>money/bank/currencylayer<span class="pl-pds">'</span></span>
+
+<span class="pl-c"># (optional)</span>
+<span class="pl-c"># set the seconds after than the current rates are automatically expired</span>
+<span class="pl-c"># by default, they never expire</span>
+<span class="pl-c1">Money</span>::<span class="pl-c1">Bank</span>::<span class="pl-c1">Currencylayer</span>.ttl_in_seconds <span class="pl-k">=</span> <span class="pl-c1">7200</span> <span class="pl-c"># 2 hours ttl</span>
+
+<span class="pl-c"># set careful mode - each rate stores with created_at time to cache and will be flushed</span>
+<span class="pl-c"># only if their time is out. If you get exception while request new rate, bank will</span>
+<span class="pl-c"># return cached value if present</span>
+<span class="pl-c"># by default false</span>
+<span class="pl-c1">Money</span>::<span class="pl-c1">Bank</span>::<span class="pl-c1">Currencylayer</span>.rates_careful <span class="pl-k">=</span> <span class="pl-c1">true</span>
+
+<span class="pl-c"># create new bank instance</span>
+bank <span class="pl-k">=</span> <span class="pl-c1">Money</span>::<span class="pl-c1">Bank</span>::<span class="pl-c1">Currencylayer</span>.<span class="pl-k">new</span>
+
+<span class="pl-c"># create new bank instance with block specifying rounding of exchange result</span>
+bank <span class="pl-k">=</span> <span class="pl-c1">Money</span>::<span class="pl-c1">Bank</span>::<span class="pl-c1">Currencylayer</span>.<span class="pl-k">new</span> {|<span class="pl-smi">n</span>| n.round(<span class="pl-c1">4</span>)} <span class="pl-c"># round result to 4 digits after point</span>
+
+<span class="pl-c"># specify your access_key from currencylayer.com</span>
+bank.access_key <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx<span class="pl-pds">'</span></span>
+
+<span class="pl-c"># set default bank to instance</span>
+<span class="pl-c1">Money</span>.default_bank <span class="pl-k">=</span> bank</pre></div>
+
+<p>Also you can setup Currencylayer as default_bank for <a href="https://github.com/RubyMoney/money-rails">money-rails</a> gem in config/initializers/money.rb</p>
+
+<div class="highlight highlight-ruby"><pre><span class="pl-k">require</span> <span class="pl-s"><span class="pl-pds">'</span>money/bank/currencylayer<span class="pl-pds">'</span></span>
+<span class="pl-c1">MoneyRails</span>.configure <span class="pl-k">do </span>|<span class="pl-smi">config</span>|
+
+  bank <span class="pl-k">=</span> <span class="pl-c1">Money</span>::<span class="pl-c1">Bank</span>::<span class="pl-c1">Currencylayer</span>.<span class="pl-k">new</span>
+  bank.access_key <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx<span class="pl-pds">'</span></span>
+  config.default_bank <span class="pl-k">=</span> bank
+
+<span class="pl-k">end</span></pre></div>
+
+<p>An <code>AccessError</code> will be thrown if access_key was not specified.</p>
+
+<p>An <code>RequestError</code> will be thrown if currencylayer.com api returns error on api request.</p>
+
+<h2>
+<a id="refs" class="anchor" href="#refs" aria-hidden="true"><span class="octicon octicon-link"></span></a>Refs</h2>
+
+<p>Created using <code>VariableExchange</code> implementation and using <code>google_currency</code> basics.</p>
+
+<ul>
+<li><a href="https://github.com/RubyMoney/money">https://github.com/RubyMoney/money</a></li>
+<li><a href="https://github.com/RubyMoney/google_currency">https://github.com/RubyMoney/google_currency</a></li>
+</ul>
+
+<p>More implementations:</p>
+
+<ul>
+<li><a href="https://github.com/RubyMoney/eu_central_bank">https://github.com/RubyMoney/eu_central_bank</a></li>
+<li><a href="https://github.com/matiaskorhonen/nordea">https://github.com/matiaskorhonen/nordea</a></li>
+<li><a href="https://github.com/slbug/nbrb_currency">https://github.com/slbug/nbrb_currency</a></li>
+<li><a href="https://github.com/spk/money-open-exchange-rates">https://github.com/spk/money-open-exchange-rates</a></li>
+<li><a href="https://github.com/atwam/money-historical-bank">https://github.com/atwam/money-historical-bank</a></li>
+<li><a href="https://github.com/rmustafin/russian_central_bank">https://github.com/rmustafin/russian_central_bank</a></li>
+</ul>
+
+<h2>
+<a id="contributing" class="anchor" href="#contributing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contributing</h2>
+
+<ol>
+<li>Fork it ( <a href="https://github.com/%5Bmy-github-username%5D/currencylayer/fork">https://github.com/[my-github-username]/currencylayer/fork</a> )</li>
+<li>Create your feature branch (<code>git checkout -b my-new-feature</code>)</li>
+<li>Commit your changes (<code>git commit -am 'Add some feature'</code>)</li>
+<li>Push to the branch (<code>git push origin my-new-feature</code>)</li>
+<li>Create a new Pull Request</li>
+</ol>
+      </section>
+
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
