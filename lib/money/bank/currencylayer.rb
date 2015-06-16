@@ -76,7 +76,7 @@ class Money
       # @return [Hash] The empty @rates Hash.
       #
       # @example
-      #   bank = Money::Bank::JsonRates.new  #=> <Money::Bank::JsonRates...>
+      #   bank = Money::Bank::Currencylayer.new  #=> <Money::Bank::Currencylayer...>
       #   bank.get_rate(:USD, :EUR)  #=> 0.776337241
       #   bank.flush_rates           #=> {}
       def flush_rates
@@ -96,7 +96,7 @@ class Money
       # @return [Float] The flushed rate.
       #
       # @example
-      #   bank = Money::Bank::JsonRates.new    #=> <Money::Bank::JsonRates...>
+      #   bank = Money::Bank::Currencylayer.new    #=> <Money::Bank::Currencylayer...>
       #   bank.get_rate(:USD, :EUR)    #=> 0.776337241
       #   bank.flush_rate(:USD, :EUR)  #=> 0.776337241
       def flush_rate(from, to)
@@ -117,7 +117,7 @@ class Money
       # @return [Float] The requested rate.
       #
       # @example
-      #   bank = Money::Bank::JsonRates.new  #=> <Money::Bank::JsonRates...>
+      #   bank = Money::Bank::Currencylayer.new  #=> <Money::Bank::Currencylayer...>
       #   bank.get_rate(:USD, :EUR)  #=> 0.776337241
       def get_rate(from, to)
         if self.class.rates_careful
@@ -136,7 +136,7 @@ class Money
       # @return [Numeric]
       #
       # @example
-      #   bank = Money::Bank::JsonRates.new  #=> <Money::Bank::JsonRates...>
+      #   bank = Money::Bank::Currencylayer.new  #=> <Money::Bank::Currencylayer...>
       #   bank.add_rate("USD", "CAD", 1.24515)  #=> 1.24515
       #   bank.add_rate("CAD", "USD", 0.803115)  #=> 0.803115
       def add_rate from, to, rate
@@ -155,7 +155,7 @@ class Money
       # @return [Numeric]
       #
       # @example
-      #   @bank = Money::Bank::JsonRates.new  #=> <Money::Bank::JsonRates...>
+      #   @bank = Money::Bank::Currencylayer.new  #=> <Money::Bank::Currencylayer...>
       #   bank.set_rate("USD", "CAD", 1.24515)  #=> 1.24515
       #   bank.set_rate("CAD", "USD", 0.803115)  #=> 0.803115
       def set_rate from, to, rate
@@ -176,7 +176,7 @@ class Money
       #
       # @example
       #   rate_key_for("USD", "CAD") #=> "USD_TO_CAD"
-      #   Money::Bank::JsonRates.rates_careful = true
+      #   Money::Bank::Currencylayer.rates_careful = true
       #   rate_key_for("USD", "CAD") #=> "USD_TO_CAD_C"
       def rate_key_for(from, to)
         if self.class.rates_careful
