@@ -1,5 +1,6 @@
 require 'money'
 require 'open-uri'
+require_relative 'on_time_patch'
 
 # Money class, see http://github.com/RubyMoney/money
 class Money
@@ -7,7 +8,6 @@ class Money
   # Provides classes that aid in the ability of exchange one currency with
   # another.
   module Bank
-
     # Exception that will be thrown if jsonrates.com api returns error on api request.
     class RequestError < StandardError ; end
 
@@ -21,6 +21,7 @@ class Money
 
     # Money::Bank implementation that gives access to the current exchange rates using jsonrates.com api.
     class Currencylayer < Money::Bank::VariableExchange
+      include OnTimePatch
 
       # Host of service jsonrates
       SERVICE_HOST = "apilayer.net"
