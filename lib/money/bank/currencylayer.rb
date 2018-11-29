@@ -1,5 +1,6 @@
 require 'money'
 require 'open-uri'
+require_relative 'on_time_patch'
 
 # Money class, see http://github.com/RubyMoney/money
 class Money
@@ -7,7 +8,6 @@ class Money
   # Provides classes that aid in the ability of exchange one currency with
   # another.
   module Bank
-
     # Exception that will be thrown if jsonrates.com api returns error on api request.
     class RequestError < StandardError ; end
 
@@ -21,15 +21,13 @@ class Money
 
     # Money::Bank implementation that gives access to the current exchange rates using jsonrates.com api.
     class Currencylayer < Money::Bank::VariableExchange
+      include OnTimePatch
 
       # Host of service jsonrates
       SERVICE_HOST = "apilayer.net"
 
       # Relative path of jsonrates api
       SERVICE_PATH = "/api/live"
-
-      # @return [Hash] Stores the currently known rates.
-      attr_reader :rates
 
       # accessor of access_key of jsonrates.com service
       attr_accessor :access_key
@@ -80,9 +78,7 @@ class Money
       #   bank.get_rate(:USD, :EUR)  #=> 0.776337241
       #   bank.flush_rates           #=> {}
       def flush_rates
-        @mutex.synchronize{
-          @rates = {}
-        }
+        @store = self.store.class.new
       end
 
       ##
@@ -100,10 +96,24 @@ class Money
       #   bank.get_rate(:USD, :EUR)    #=> 0.776337241
       #   bank.flush_rate(:USD, :EUR)  #=> 0.776337241
       def flush_rate(from, to)
-        key = rate_key_for(from, to)
-        @mutex.synchronize{
-          @rates.delete(key)
+        rates = {}
+
+        self.store.transaction {
+          self.store.each_rate do |iso_from, iso_to, rate|
+            next if iso_from == from && iso_to == to
+            rates[rate_key_for(iso_from, iso_to)] = rate
+          end
         }
+
+        @store = self.store.class.new
+
+        self.store.transaction do
+          rates.each do |k, r|
+            key_from = k.split(self.store.class::INDEX_KEY_SEPARATOR).first
+            key_to = k.split(self.store.class::INDEX_KEY_SEPARATOR).last
+            self.store.add_rate(key_from, key_to, r)
+          end
+        end
       end
 
       ##
@@ -139,8 +149,8 @@ class Money
       #   bank = Money::Bank::Currencylayer.new  #=> <Money::Bank::Currencylayer...>
       #   bank.add_rate("USD", "CAD", 1.24515)  #=> 1.24515
       #   bank.add_rate("CAD", "USD", 0.803115)  #=> 0.803115
-      def add_rate from, to, rate
-        set_rate from, to, rate
+      def add_rate(from, to, rate)
+        set_rate(from, to, rate)
       end
 
       # Set the rate for the given currencies. Uses +Mutex+ to synchronize data
@@ -158,7 +168,7 @@ class Money
       #   @bank = Money::Bank::Currencylayer.new  #=> <Money::Bank::Currencylayer...>
       #   bank.set_rate("USD", "CAD", 1.24515)  #=> 1.24515
       #   bank.set_rate("CAD", "USD", 0.803115)  #=> 0.803115
-      def set_rate from, to, rate
+      def set_rate(from, to, rate)
         if self.class.rates_careful
           set_rate_with_time(from, to, rate)
         else
@@ -176,14 +186,8 @@ class Money
       #
       # @example
       #   rate_key_for("USD", "CAD") #=> "USD_TO_CAD"
-      #   Money::Bank::Currencylayer.rates_careful = true
-      #   rate_key_for("USD", "CAD") #=> "USD_TO_CAD_C"
       def rate_key_for(from, to)
-        if self.class.rates_careful
-          "#{Currency.wrap(from).iso_code}_TO_#{Currency.wrap(to).iso_code}_C".upcase
-        else
-          super
-        end
+        self.store.send(:rate_key_for, from, to)
       end
 
       ##
@@ -222,13 +226,12 @@ class Money
       #
       # @return [Float] The requested rate.
       def get_rate_careful(from, to)
-
-        rate_key    = rate_key_for(from, to)
-        rate_cached = @rates[rate_key]
+        rate_key = rate_key_for(from, to)
+        rate_cached = self.rates[rate_key]
 
         if rate_cached.nil? || expired_time?(rate_cached[:created_at])
           set_rate_with_time(from, to, fetch_rate(from, to))
-          @rates[rate_key][:rate]
+          self.rates[rate_key][:rate]
         else
           rate_cached[:rate]
         end
@@ -252,8 +255,8 @@ class Money
       def get_rate_straight(from, to)
         expire_rates
 
-        @mutex.synchronize{
-          @rates[rate_key_for(from, to)] ||= fetch_rate(from, to)
+        self.store.transaction{
+          self.rates[rate_key_for(from, to)] ||= fetch_rate(from, to)
         }
       end
 
@@ -281,9 +284,11 @@ class Money
       # @return [Numeric]
       def set_rate_with_time(from, to, rate)
         rate_d = BigDecimal.new(rate.to_s)
-        @mutex.synchronize {
-          @rates[rate_key_for(from, to)] = {rate: rate_d, created_at: Time.now}
+
+        self.store.transaction {
+          self.store.add_rate(from, to, { rate: rate_d, created_at: Time.now })
         }
+
         rate_d
       end
 
@@ -293,7 +298,7 @@ class Money
       # @param [Time] time Time to check
       #
       # @return [Boolean] Is the time expired.
-      def expired_time? time
+      def expired_time?(time)
         time + self.class.ttl_in_seconds.to_i < Time.now
       end
 

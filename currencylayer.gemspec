@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "currencylayer"
-  spec.version       = '0.0.1'
+  spec.version       = '0.0.2'
   spec.authors       = ["Andrey Skuratovsky"]
   spec.email         = ["skuratowsky@gmail.com"]
   spec.summary       = "Access to the currencylayer.com online exchange rates"
@@ -15,7 +15,7 @@ Gem::Specification.new do |spec|
   spec.files         =  Dir.glob("{lib,spec}/**/*")
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "money", "~> 6"
+  spec.add_dependency "money", "~> 6.13.1"
 
   spec.add_development_dependency "rspec", ">= 3.0.0"
   spec.add_development_dependency "timecop"
