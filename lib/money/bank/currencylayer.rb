@@ -101,7 +101,6 @@ class Money
         self.store.transaction {
           self.store.each_rate do |iso_from, iso_to, rate|
             next if iso_from == from && iso_to == to
-
             rates[rate_key_for(iso_from, iso_to)] = rate
           end
         }
@@ -187,12 +186,8 @@ class Money
       #
       # @example
       #   rate_key_for("USD", "CAD") #=> "USD_TO_CAD"
-      #   Money::Bank::Currencylayer.rates_careful = true
-      #   rate_key_for("USD", "CAD") #=> "USD_TO_CAD_C"
       def rate_key_for(from, to)
-        key = "#{Currency.wrap(from).iso_code}_TO_#{Currency.wrap(to).iso_code}"
-        key += '_C' if self.class.rates_careful
-        key.upcase
+        self.store.send(:rate_key_for, from, to)
       end
 
       ##
@@ -232,11 +227,11 @@ class Money
       # @return [Float] The requested rate.
       def get_rate_careful(from, to)
         rate_key = rate_key_for(from, to)
-        rate_cached = self.store.get_rate(from, to)
+        rate_cached = self.rates[rate_key]
 
-        if rate_key.nil? || expired_time?(rate_cached[:created_at])
+        if rate_cached.nil? || expired_time?(rate_cached[:created_at])
           set_rate_with_time(from, to, fetch_rate(from, to))
-          @rates[rate_key][:rate]
+          self.rates[rate_key][:rate]
         else
           rate_cached[:rate]
         end
@@ -261,7 +256,7 @@ class Money
         expire_rates
 
         self.store.transaction{
-          self.store.get_rate(from, to)
+          self.rates[rate_key_for(from, to)] ||= fetch_rate(from, to)
         }
       end
 
